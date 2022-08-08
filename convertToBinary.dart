@@ -28,14 +28,14 @@ class ConvertNumbers {
   }
 
   static List<int> complementTwo(List<int> listNumber) {
+    
     int carryIn = 1;
     for (int i = listNumber.length - 1; i != 0; i--) {
       if (listNumber[i] == carryIn) {
         listNumber[i] = 0;
         carryIn = 1;
       } else {
-        listNumber[i] = 1;
-        carryIn = 0;
+        listNumber[i] = 1;        
         break;
       }
     }
