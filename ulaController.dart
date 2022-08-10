@@ -5,95 +5,133 @@ import 'orComponent.dart';
 
 class Ula {
   int sizeUla;
-  
+
   Ula({required this.sizeUla}) {
     sizeUla++;
     ConvertNumbers.totalBitsUla = sizeUla;
   }
 
-  List<int> andOperation(int numA, int numB) {
-    And andOp = And();
-    List<int> resultList = defaultOperation(andOp.operationAnd, numA, numB);
-    return resultList;
-  }
+  Map<String, dynamic> inputOperation(List<int> op, int numA, int numB) {
+    List<int> numAConverted = ConvertNumbers.toBinary(numA);
+    List<int> numBConverted = ConvertNumbers.toBinary(numB);
+    List<int> numBOverflowCheck = ConvertNumbers.toBinary(numB); // Converte b
+    int carryOutput = 0; // Sinal da saída carryOutput
+    int zeroOutput = 0; // Sinal da saída Zero
+    int overflowSignal = 0; // Sinal da saída Overflow
+    List<int> andList = [];
+    List<int> orList = [];
+    List<int> addList = [];
+    List<int> resultList = [];
+    int carryIn = (op[2] == 1 && op[1] == 1) ? 1 : 0;
+    int isBiggerThen = 0; // Indica se é maior ou menor
 
-  List<int> orOperation(int numA, int numB) {
-    Or orOp = Or();
-    List<int> resultList = defaultOperation(orOp.operationOr, numA, numB);
-    return resultList;
-  }
-
-  List<int> defaultOperation(
-      Function(int a, int b) currentOperation, int numA, int numB) {
-    List<int> listNumA = ConvertNumbers.toBinary(numA);
-    List<int> listNumB = ConvertNumbers.toBinary(numB);
-    List<int> listNumResult = [];
-
-    for (int i = 0; i < sizeUla; i++) {
-      listNumResult.add(currentOperation(listNumA[i], listNumB[i]));
-    }
-    return listNumResult;
-  }
-
-  List<int> addOperation(int numA, int numB) {
-    Add add = Add();
-    List<int> resultList = defaultAddSubOperation(add.addComponent, numA, numB);
-    return resultList;
-  }
-
-  List<int> subOperation(int numA, int numB) {
-    Add add = Add();
-    List<int> resultList = defaultAddSubOperation(
-      add.addComponent,
-      numA,
-      (numB * -1),
-    );
-    return resultList;
-  }
-
-  List<int> defaultAddSubOperation(
-      Function(int a, int b, int carryIn) currentFunction, int numA, int numB) {
-    List<int> listNumA = ConvertNumbers.toBinary(numA);
-    List<int> listNumB = ConvertNumbers.toBinary(numB);
-    List<int> listNumResult = [];
-
-    int carryIn = 0;
     for (int i = sizeUla - 1; i != 0; i--) {
-      Map result = currentFunction(
-        listNumA[i],
-        listNumB[i],
-        carryIn,
-      );
+      if (op[0] == 1) {
+        // Checa se A inverte
+        numAConverted[i] = And.bitInverse(numAConverted[i]);
+      }
+      if (op[1] == 1) {
+        // Checa se B inverte
+        numBConverted[i] = And.bitInverse(numBConverted[i]);
+      }
+
+      andList.insert(0, andOperation(numAConverted[i], numBConverted[i]));
+      orList.insert(0, orOperation(numAConverted[i], numBConverted[i]));
+      Map result = addOperation(numAConverted[i], numBConverted[i], carryIn);
+
       carryIn = result['carryIn'];
-      listNumResult.insert(0, result['result']);
+      addList.insert(0, result['result']);
+
+      Map resultOp = opChoices(op, andList, orList, addList);
+      resultList = resultOp['resultList'];
+      isBiggerThen = resultOp['isBiggerThen'];
     }
-    return listNumResult;
-  }
 
-  int largestNumber(int numA, int numB) {
-    List<int> resultList = subOperation(numA, numB);
-    return resultList[0] == 0 ? 0 : 1;
-  }
-
-  List<int> norOperation(int numA, int numB) {
-    List<int> resultList = ConvertNumbers.invertNumber(orOperation(numA, numB));
-    return resultList;
-  }
-
-  int addOverflow(int numA, int numB) {
-    List<int> listNumA = ConvertNumbers.toBinary(numA);
-    List<int> listNumB = ConvertNumbers.toBinary(numB);
-    List<int> sumNums = addOperation(numA, numB);
-
-    // 10 + -5
-    //-10 + 5 =
-    if (sumNums[0] == listNumA[0]) {
-      return 0;
-    } else if (sumNums[0] == listNumB[0]) {
-      return 0;
+    if (op[2] == 1 && op[3] == 1) {
+      // Resultado da Operação A < B
+      resultList.add(isBiggerThen);
     }
-    return 1;
+
+    Map checkOverflow = checkOver(
+      op,
+      numAConverted[0],
+      numBOverflowCheck[0],
+      resultList,
+    );
+
+    carryOutput = checkOverflow['carryOutput'];
+    overflowSignal = checkOverflow['overflowSignal'];
+
+    if (resultList.every((element) => element == 0)) {
+      // Zero
+      zeroOutput = 1;
+    }
+
+    return {
+      "result": resultList,
+      "carryOutput": carryOutput,
+      "zero": zeroOutput,
+      "overflow": overflowSignal,
+    };
+  }
+
+  int andOperation(int bitA, int bitB) {
+    And and = And(); // Operação Lógica E
+    return and.operationAnd(bitA, bitB);
+  }
+
+  int orOperation(int bitA, int bitB) {
+    Or or = Or(); // Operação Lógica Ou
+    return or.operationOr(bitA, bitB);
+  }
+
+  Map addOperation(int bitA, int bitB, int carryIn) {
+    Add add = Add(); // Operação de Adição
+    return add.addComponent(
+      bitA,
+      bitB,
+      carryIn,
+    );
+  }
+
+  Map opChoices(
+      List<int> op, List<int> andList, List<int> orList, List<int> addList) {
+    List<int> resultList = [];
+    int isBiggerThen = 0;
+    if (op[2] == 0 && op[3] == 0) {
+      resultList = andList;
+    } else if (op[2] == 0 && op[3] == 1) {
+      resultList = orList;
+    } else if (op[2] == 1 && op[3] == 0) {
+      resultList = addList;
+    } else if (op[2] == 1 && op[3] == 1) {
+      // Operação A < B
+      (addList[0] == 0) ? isBiggerThen = 0 : isBiggerThen = 1;
+    }
+
+    return {
+      'resultList': resultList,
+      'isBiggerThen': isBiggerThen,
+    };
+  }
+
+  Map checkOver(List<int> op, int numA, int numB, List<int> resultList) {
+    int carryOutput = 0;
+    int overflowSignal = 0;
+    if (op[2] == 1 && op[3] == 0) {
+      if (!(numA == numB && numB == resultList[0]) &&
+          op[1] == 0 &&
+          op[2] == 1) {
+        carryOutput = 1;
+        overflowSignal = 0;
+      }
+      if (((numA != numB && op[2] == 1 && op[1] == 1 && op[3] == 0) &&
+          (numB == resultList[0]))) {
+        carryOutput = 0;
+        overflowSignal = 1;
+      }
+    }
+
+    return {"carryOutput": carryOutput, "overflowSignal": overflowSignal};
   }
 }
-
-//sumNums[0] != listNumA[0] || listNumB[0]
