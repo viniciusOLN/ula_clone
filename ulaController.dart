@@ -109,17 +109,14 @@ class Ula {
       (addList[0] == 0) ? isBiggerThen = 0 : isBiggerThen = 1;
     }
 
-    return {
-      'resultList': resultList,
-      'isBiggerThen': isBiggerThen,
-    };
+    return {'resultList': resultList, 'isBiggerThen': isBiggerThen};
   }
 
   Map checkOver(List<int> op, int numA, int numB, List<int> resultList) {
     int carryOutput = 0;
     int overflowSignal = 0;
     if (op[2] == 1 && op[3] == 0) {
-      if (!(numA == numB && numB == resultList[0]) &&
+      if ((numA == numB && numB != resultList[0]) &&
           op[1] == 0 &&
           op[2] == 1) {
         carryOutput = 1;
