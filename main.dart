@@ -10,6 +10,10 @@
     1100 = Nor
 */
 
+/* Caso queira fazer por escolha do usuário(Digitar a operação e os números), 
+  selecione a opção "1.Digitar números".
+*/
+
 import 'ulaController.dart';
 import 'dart:io';
 
@@ -48,7 +52,8 @@ void getNumbersFromUser(Ula ula, List<int> op, int numA, int numB) {
       " | zero = " +
       result['zero'].toString() +
       " | overflow = " +
-      result['overflow'].toString());
+      result['overflow'].toString()
+  );
 }
 
 void main() {
